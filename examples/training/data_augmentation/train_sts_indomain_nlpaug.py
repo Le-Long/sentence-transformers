@@ -62,10 +62,6 @@ num_epochs = 1
 #Check if dataset exsist. If not, download and extract  it
 xnli_dataset_path = 'datasets/multinli.train.vi.tsv.gz'
 
-if not os.path.exists(xnli_dataset_path):
-    util.http_get('https://sbert.net/datasets/stsbenchmark.tsv.gz', sts_dataset_path)
-
-
 model_save_path = 'output/bi-encoder/xnli_indomain_eda_'+model_name.replace("/", "-")+'-'+datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 
 ###### Bi-encoder (sentence-transformers) ######
