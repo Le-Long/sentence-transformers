@@ -65,10 +65,7 @@ max_seq_length = 128
 ###### Read Datasets ######
 
 #Check if dataset exsist. If not, download and extract  it
-sts_dataset_path = 'datasets/stsbenchmark.tsv.gz'
-
-if not os.path.exists(sts_dataset_path):
-    util.http_get('https://sbert.net/datasets/stsbenchmark.tsv.gz', sts_dataset_path)
+sts_dataset_path = '/content/datasets/multinli.train.vi.tsv.gz'
 
 cross_encoder_path = 'output/cross-encoder/stsb_indomain_'+model_name.replace("/", "-")+'-'+datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 bi_encoder_path = 'output/bi-encoder/stsb_augsbert_BM25_'+model_name.replace("/", "-")+'-'+datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
@@ -102,19 +99,19 @@ gold_samples = []
 dev_samples = []
 test_samples = []
 
-with gzip.open(sts_dataset_path, 'rt', encoding='utf8') as fIn:
+with gzip.open(xnli_dataset_path, 'rt', encoding='utf8') as fIn:
     reader = csv.DictReader(fIn, delimiter='\t', quoting=csv.QUOTE_NONE)
+    label_dict = {'entailment': 1.0, 'neutral': 2.0, 'contradictory': 3.0}
     for row in reader:
-        score = float(row['score']) / 5.0  # Normalize score to range 0 ... 1
-
-        if row['split'] == 'dev':
-            dev_samples.append(InputExample(texts=[row['sentence1'], row['sentence2']], label=score))
-        elif row['split'] == 'test':
-            test_samples.append(InputExample(texts=[row['sentence1'], row['sentence2']], label=score))
+        score = label_dict[row['label']]
+        inp_example = InputExample(texts=[row['premise'], row['hypo']], label=score)
+        rand = np.random.randint(1, 10)
+        if rand > 8:
+            dev_samples.append(inp_example)
+        elif rand == 8:
+            test_samples.append(inp_example)
         else:
-            #As we want to get symmetric scores, i.e. CrossEncoder(A,B) = CrossEncoder(B,A), we pass both combinations to the train set
-            gold_samples.append(InputExample(texts=[row['sentence1'], row['sentence2']], label=score))
-            gold_samples.append(InputExample(texts=[row['sentence2'], row['sentence1']], label=score))
+            gold_samples.append(inp_example)
 
 
 # We wrap gold_samples (which is a List[InputExample]) into a pytorch DataLoader
