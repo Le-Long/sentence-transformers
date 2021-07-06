@@ -60,7 +60,7 @@ num_epochs = 1
 ###### Read Datasets ######
 
 #Check if dataset exsist. If not, download and extract  it
-xnli_dataset_path = 'datasets/multinli.train.vi.tsv.gz'
+xnli_dataset_path = '/content/datasets/multinli.train.vi.tsv.gz'
 
 model_save_path = 'output/bi-encoder/xnli_indomain_eda_'+model_name.replace("/", "-")+'-'+datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 
