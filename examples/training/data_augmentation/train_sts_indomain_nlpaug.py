@@ -95,7 +95,7 @@ with gzip.open(xnli_dataset_path, 'rt', encoding='utf8') as fIn:
         rand = np.random.randint(1, 10)
         if rand > 8:
             dev_samples.append(inp_example)
-        elif rand = 8:
+        elif rand == 8:
             test_samples.append(inp_example)
         else:
             gold_samples.append(inp_example)
