@@ -34,6 +34,7 @@ from sentence_transformers.evaluation import EmbeddingSimilarityEvaluator
 from sentence_transformers.readers import InputExample
 from elasticsearch import Elasticsearch
 from datetime import datetime
+import numpy as np
 import logging
 import csv
 import sys
@@ -65,7 +66,7 @@ max_seq_length = 128
 ###### Read Datasets ######
 
 #Check if dataset exsist. If not, download and extract  it
-sts_dataset_path = '/content/datasets/multinli.train.vi.tsv.gz'
+xnli_dataset_path = '/content/datasets/multinli.train.vi.tsv.gz'
 
 cross_encoder_path = 'output/cross-encoder/xnli_indomain_'+model_name.replace("/", "-")+'-'+datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 bi_encoder_path = 'output/bi-encoder/xnli_augsbert_BM25_'+model_name.replace("/", "-")+'-'+datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
