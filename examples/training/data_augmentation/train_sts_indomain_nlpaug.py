@@ -89,9 +89,9 @@ with gzip.open(xnli_dataset_path, 'rt', encoding='utf8') as fIn:
         score = label_dict[row['label']]
         inp_example = InputExample(texts=[row['premise'], row['hypo']], label=score)
         rand = np.random.randint(1, 10)
-        if rand > 8:
+        if rand > 9:
             dev_samples.append(inp_example)
-        elif rand == 8:
+        elif rand == 9:
             test_samples.append(inp_example)
         else:
             gold_samples.append(inp_example)
@@ -139,13 +139,13 @@ logging.info("Number of silver pairs generated: {}".format(len(silver_samples)))
 #
 ###################################################################
 
-logging.info("Read STSbenchmark (gold + silver) training dataset")
+logging.info("Read XNLI (gold + silver) training dataset")
 train_dataloader = DataLoader(gold_samples + silver_samples, shuffle=True, batch_size=batch_size)
 train_loss = losses.CosineSimilarityLoss(model=model)
 
 
-logging.info("Read STSbenchmark dev dataset")
-evaluator = EmbeddingSimilarityEvaluator.from_input_examples(dev_samples, name='sts-dev')
+logging.info("Read XNLI dev dataset")
+evaluator = EmbeddingSimilarityEvaluator.from_input_examples(dev_samples, name='dev')
 
 
 # Configure the training.
