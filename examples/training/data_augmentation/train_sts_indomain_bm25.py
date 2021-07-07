@@ -55,7 +55,7 @@ tracer.setLevel(logging.CRITICAL)
 es = Elasticsearch()
 
 #You can specify any huggingface/transformers pre-trained model here, for example, bert-base-uncased, roberta-base, xlm-roberta-base
-model_name = sys.argv[1] if len(sys.argv) > 1 else 'bert-base-uncased'
+model_name = sys.argv[1] if len(sys.argv) > 1 else 'bert-base-multilingual-uncased'
 top_k = int(sys.argv[2]) if len(sys.argv) > 2 else 3
 
 batch_size = 16
@@ -67,8 +67,8 @@ max_seq_length = 128
 #Check if dataset exsist. If not, download and extract  it
 sts_dataset_path = '/content/datasets/multinli.train.vi.tsv.gz'
 
-cross_encoder_path = 'output/cross-encoder/stsb_indomain_'+model_name.replace("/", "-")+'-'+datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-bi_encoder_path = 'output/bi-encoder/stsb_augsbert_BM25_'+model_name.replace("/", "-")+'-'+datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+cross_encoder_path = 'output/cross-encoder/xnli_indomain_'+model_name.replace("/", "-")+'-'+datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+bi_encoder_path = 'output/bi-encoder/xnli_augsbert_BM25_'+model_name.replace("/", "-")+'-'+datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 
 ###### Cross-encoder (simpletransformers) ######
 logging.info("Loading sentence-transformers model: {}".format(model_name))
@@ -93,7 +93,7 @@ bi_encoder = SentenceTransformer(modules=[word_embedding_model, pooling_model])
 #
 #####################################################################
 
-logging.info("Step 1: Train cross-encoder: ({}) with STSbenchmark".format(model_name))
+logging.info("Step 1: Train cross-encoder: ({}) with XNLI".format(model_name))
 
 gold_samples = []
 dev_samples = []
@@ -106,9 +106,9 @@ with gzip.open(xnli_dataset_path, 'rt', encoding='utf8') as fIn:
         score = label_dict[row['label']]
         inp_example = InputExample(texts=[row['premise'], row['hypo']], label=score)
         rand = np.random.randint(1, 10)
-        if rand > 8:
+        if rand > 9:
             dev_samples.append(inp_example)
-        elif rand == 8:
+        elif rand == 9:
             test_samples.append(inp_example)
         else:
             gold_samples.append(inp_example)
@@ -141,8 +141,8 @@ cross_encoder.fit(train_dataloader=train_dataloader,
 #### Top k similar sentences to be retrieved ####
 #### Larger the k, bigger the silver dataset ####
 
-index_name = "stsb" # index-name should be in lowercase
-logging.info("Step 2.1: Generate STSbenchmark (silver dataset) using top-{} bm25 combinations".format(top_k))
+index_name = "xnli" # index-name should be in lowercase
+logging.info("Step 2.1: Generate XNLI (silver dataset) using top-{} bm25 combinations".format(top_k))
 
 unique_sentences = set()
 
@@ -182,8 +182,8 @@ for sent, idx in sent2idx.items():
 progress.reset()
 progress.close()
 
-logging.info("Number of silver pairs generated for STSbenchmark: {}".format(len(silver_data)))
-logging.info("Step 2.2: Label STSbenchmark (silver dataset) with cross-encoder: {}".format(model_name))
+logging.info("Number of silver pairs generated for XNLI: {}".format(len(silver_data)))
+logging.info("Step 2.2: Label XNLI (silver dataset) with cross-encoder: {}".format(model_name))
 
 cross_encoder = CrossEncoder(cross_encoder_path)
 silver_scores = cross_encoder.predict(silver_data)
@@ -197,10 +197,10 @@ assert all(0.0 <= score <= 1.0 for score in silver_scores)
 #
 #################################################################################################
 
-logging.info("Step 3: Train bi-encoder: {} with STSbenchmark (gold + silver dataset)".format(model_name))
+logging.info("Step 3: Train bi-encoder: {} with XNLI (gold + silver dataset)".format(model_name))
 
 # Convert the dataset to a DataLoader ready for training
-logging.info("Read STSbenchmark gold and silver train dataset")
+logging.info("Read XNLI gold and silver train dataset")
 silver_samples = list(InputExample(texts=[data[0], data[1]], label=score) for \
     data, score in zip(silver_data, silver_scores))
 
@@ -208,7 +208,7 @@ silver_samples = list(InputExample(texts=[data[0], data[1]], label=score) for \
 train_dataloader = DataLoader(gold_samples + silver_samples, shuffle=True, batch_size=batch_size)
 train_loss = losses.CosineSimilarityLoss(model=bi_encoder)
 
-logging.info("Read STSbenchmark dev dataset")
+logging.info("Read XNLI dev dataset")
 evaluator = EmbeddingSimilarityEvaluator.from_input_examples(dev_samples, name='sts-dev')
 
 # Configure the training.
@@ -232,6 +232,6 @@ bi_encoder.fit(train_objectives=[(train_dataloader, train_loss)],
 
 # load the stored augmented-sbert model
 bi_encoder = SentenceTransformer(bi_encoder_path)
-logging.info("Read STSbenchmark test dataset")
+logging.info("Read XNLI test dataset")
 test_evaluator = EmbeddingSimilarityEvaluator.from_input_examples(test_samples, name='sts-test')
 test_evaluator(bi_encoder, output_path=bi_encoder_path)
