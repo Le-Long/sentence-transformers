@@ -120,7 +120,7 @@ train_dataloader = DataLoader(gold_samples, shuffle=True, batch_size=batch_size)
 
 
 # We add an evaluator, which evaluates the performance during training
-evaluator = CECorrelationEvaluator.from_input_examples(dev_samples, name='sts-dev')
+evaluator = CECorrelationEvaluator.from_input_examples(dev_samples, name='xnli-dev')
 
 # Configure the training
 warmup_steps = math.ceil(len(train_dataloader) * num_epochs * 0.1) #10% of train data for warm-up
@@ -210,7 +210,7 @@ train_dataloader = DataLoader(gold_samples + silver_samples, shuffle=True, batch
 train_loss = losses.CosineSimilarityLoss(model=bi_encoder)
 
 logging.info("Read XNLI dev dataset")
-evaluator = EmbeddingSimilarityEvaluator.from_input_examples(dev_samples, name='sts-dev')
+evaluator = EmbeddingSimilarityEvaluator.from_input_examples(dev_samples, name='xnli-dev')
 
 # Configure the training.
 warmup_steps = math.ceil(len(train_dataloader) * num_epochs  * 0.1) #10% of train data for warm-up
@@ -234,5 +234,5 @@ bi_encoder.fit(train_objectives=[(train_dataloader, train_loss)],
 # load the stored augmented-sbert model
 bi_encoder = SentenceTransformer(bi_encoder_path)
 logging.info("Read XNLI test dataset")
-test_evaluator = EmbeddingSimilarityEvaluator.from_input_examples(test_samples, name='sts-test')
+test_evaluator = EmbeddingSimilarityEvaluator.from_input_examples(test_samples, name='xnli-test')
 test_evaluator(bi_encoder, output_path=bi_encoder_path)
